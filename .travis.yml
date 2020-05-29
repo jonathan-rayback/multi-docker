@@ -1,0 +1,24 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t jrayback/react-test -f ./client/Dockerfile.dev ./client/Dockerfile.dev
+  
+script:
+  - docker run -e CI=true jrayback/react-test npm test
+
+after_success:
+  - docker build -t jrayback/multi-client ./client
+  - docker build -t jrayback/multi-nginx ./nginx
+  - docker build -t jrayback/multi-server ./server
+  - docker build -t jrayback/multi-worker ./worker
+  # Log into the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take images and push to Docker Hub
+  - docker push jrayback/multi-client
+  - docker push jrayback/multi-nginx
+  - docker push jrayback/multi-server
+  - docker push jrayback/multi-worker
+  
